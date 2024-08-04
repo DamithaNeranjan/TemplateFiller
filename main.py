@@ -1,8 +1,9 @@
+import os
+import sys
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from docx import Document
 import json
-import os
 
 
 class TemplateApp:
@@ -28,8 +29,19 @@ class TemplateApp:
         self.save_button = tk.Button(root, text="Save Document", command=self.save_document)
         self.save_button.pack()
 
+    def resource_path(self, relative_path):
+        """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
     def load_templates(self):
-        with open('D:\\Gayana Mahendra\\TemplateApplication\\templates.json', 'r') as f:
+        path = self.resource_path('templates.json')
+        with open(path, 'r') as f:
             return json.load(f)
 
     def load_fields(self, event):
@@ -53,7 +65,12 @@ class TemplateApp:
             return
 
         template_info = self.templates[template_name]
-        doc = Document(template_info["file"])
+        template_path = self.resource_path(template_info["file"])
+        if not os.path.exists(template_path):
+            messagebox.showerror("Error", f"Template file not found: {template_path}")
+            return
+
+        doc = Document(template_path)
 
         for field, entry in self.fields.items():
             value = entry.get()
